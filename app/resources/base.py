@@ -1,21 +1,21 @@
 #  Polkascan PRE Explorer API
-# 
-#  Copyright 2018-2019 openAware BV (NL).
+#
+#  Copyright 2018-2020 openAware BV (NL).
 #  This file is part of Polkascan.
-# 
+#
 #  Polkascan is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
 #  the Free Software Foundation, either version 3 of the License, or
 #  (at your option) any later version.
-# 
+#
 #  Polkascan is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
-# 
+#
 #  You should have received a copy of the GNU General Public License
 #  along with Polkascan. If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 #  base.py
 from abc import ABC, abstractmethod
 
@@ -24,6 +24,7 @@ from dogpile.cache import CacheRegion
 from dogpile.cache.api import NO_VALUE
 from sqlalchemy.orm import Session
 
+from app.models.base import BaseModel
 from app.settings import MAX_RESOURCE_PAGE_SIZE, DOGPILE_CACHE_SETTINGS
 
 
@@ -122,6 +123,9 @@ class JSONAPIListResource(JSONAPIResource, ABC):
 
     cache_expiration_time = DOGPILE_CACHE_SETTINGS['default_list_cache_expiration_time']
 
+    def get_included_items(self, items):
+        return []
+
     @abstractmethod
     def get_query(self):
         raise NotImplementedError()
@@ -140,7 +144,8 @@ class JSONAPIListResource(JSONAPIResource, ABC):
             'status': falcon.HTTP_200,
             'media': self.get_jsonapi_response(
                 data=[self.serialize_item(item) for item in items],
-                meta=self.get_meta()
+                meta=self.get_meta(),
+                included=self.get_included_items(items)
             ),
             'cacheable': True
         }
@@ -176,7 +181,7 @@ class JSONAPIDetailResource(JSONAPIResource, ABC):
                 'status': falcon.HTTP_200,
                 'media': self.get_jsonapi_response(
                     data=self.serialize_item(item),
-                    relationships=self.get_relationships(req.params.get('include') or [], item),
+                    relationships=self.get_relationships(req.params.get('include', []), item),
                     meta=self.get_meta()
                 ),
                 'cacheable': True

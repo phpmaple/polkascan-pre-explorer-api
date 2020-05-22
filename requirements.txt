@@ -38,3 +38,4 @@ zipp==0.5.2
 
 git+https://github.com/phpmaple/py-scale-codec.git@master#egg=scalecodec
 git+https://github.com/phpmaple/py-substrate-interface.git@master#egg=substrateinterface
+
